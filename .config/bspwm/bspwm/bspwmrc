@@ -1,0 +1,49 @@
+#! /bin/bash
+
+is_hdmi_connected () {
+  if [[ $(xrandr -q |grep "HDMI1 connected") ]]; then
+    return 0
+  fi
+  echo "HDMI not connected!"
+  return 1
+}
+
+# check if any input was given
+if [[ "$1" == "" || "$1" == "0" ]]; then
+  monitor_res=$(xrandr -q |sed -n '/eDP1 connected/{n;p}' | awk '{print $1}')
+  xrandr --output eDP1 --primary --mode ${monitor_res} --rotate normal
+  bspc monitor eDP1 -d 1 2 3 4 5 6 7 8 9
+elif [ "$1" == "dual" ]; then
+  if is_hdmi_connected; then
+    xrandr --output eDP1 --primary --auto --rotate normal --output HDMI1 --auto --rotate normal --right-of eDP1
+    bspc monitor eDP1 -d 1 2 3 4 5
+    bspc monitor HDMI1 -d 6 7 8 9
+  fi
+elif [ "$1" == "mirrored" ]; then
+  if is_hdmi_connected; then
+    mirror_res=$(xrandr -q |sed -n '/HDMI1 connected/{n;p}' | awk '{print $1}')
+    xrandr --output eDP1 --primary --mode ${mirror_res} --rotate normal --output HDMI1 --mode ${mirror_res} --rotate normal --right-of eDP1
+    xrandr --output eDP1 --same-as HDMI1
+    bspc monitor HDMI1 -d 1 2 3 4 5 6 7 8 9
+  fi
+else
+  echo "unknown input!"
+fi
+
+
+$HOME/.config/polybar/launch.sh &
+pgrep -x sxhkd > /dev/null || sxhkd &
+
+bspc config border_width         2
+bspc config window_gap          10
+bspc config top_padding         20
+
+bspc config split_ratio          0.52
+bspc config borderless_monocle   true
+bspc config gapless_monocle      true
+
+bspc rule -a Gimp desktop='^8' state=floating follow=on
+bspc rule -a Chromium desktop='^2'
+bspc rule -a mplayer2 state=floating
+bspc rule -a Kupfer.py focus=on
+bspc rule -a Screenkey manage=off
