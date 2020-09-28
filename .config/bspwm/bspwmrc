@@ -30,7 +30,7 @@ else
   echo "unknown input!"
 fi
 
-
+light-locker &
 $HOME/.config/polybar/launch.sh &
 pgrep -x sxhkd > /dev/null || sxhkd &
 
